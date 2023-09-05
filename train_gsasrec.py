@@ -51,11 +51,11 @@ for epoch in range(config.max_epochs):
         negatives = negatives[:, 1:, :]
         pos_neg_concat = torch.cat([labels.unsqueeze(-1), negatives], dim=-1)
         pos_neg_embeddings = model.item_embedding(pos_neg_concat)
-        mask = (model_input != num_items + 1).float().unsqueeze(-1).repeat(1, 1, config.negs_per_pos + 1)
+        mask = (model_input != num_items + 1).float()
         scores = torch.einsum('bld,blnd->bln', last_hidden_state, pos_neg_embeddings)
         gt = torch.zeros_like(scores)
         gt[:, :, 0] = 1
-        loss = loss_fct(scores, gt)*mask
+        loss = loss_fct(scores, gt).sum(dim=-1)
         mean_loss = loss.sum() / mask.sum()
         mean_loss.backward()
         optimiser.step()
@@ -76,6 +76,7 @@ for epoch in range(config.max_epochs):
         torch.save(model.state_dict(), model_name)
     else:
         steps_not_improved += 1
+        print(f"Validation metric did not improve for {steps_not_improved} steps")
         if steps_not_improved >= config.early_stopping_patience:
             print(f"Stopping training, best model was saved to {best_model_name}")
             break
