@@ -47,7 +47,7 @@ class GSASRec(torch.nn.Module):
             seq_emb = model_out[:,-1,:] 
             scores = torch.einsum('bd,nd->bn', seq_emb, self.item_embedding.weight)
             scores[:,0] = float("-inf")
-            scores[self.num_items+1:] = float("-inf")
+            scores[:,self.num_items+1:] = float("-inf")
             if rated is not None:
                 for i in range(len(input)):
                     for j in rated[i]:
