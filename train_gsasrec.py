@@ -35,7 +35,6 @@ best_model_name = None
 step = 0
 steps_not_improved = 0
 
-print(summary(model, (config.sequence_length,)))
 model = model.to(device)
 
 for epoch in range(config.max_epochs):
