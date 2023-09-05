@@ -32,6 +32,7 @@ batches_per_epoch = min(config.max_batches_per_epoch, len(train_dataloader))
 best_metric = float("-inf")
 best_model_name = None
 step = 0
+steps_not_improved = 0
 
 for epoch in range(config.max_epochs):
     model.train()   
@@ -68,7 +69,10 @@ for epoch in range(config.max_epochs):
         if best_model_name is not None:
             os.remove(best_model_name)
         best_model_name = model_name
+        steps_not_improved = 0
         torch.save(model.state_dict(), model_name)
-
-
-        
+    else:
+        steps_not_improved += 1
+        if steps_not_improved >= config.early_stopping_patience:
+            print(f"Stopping training, best model was saved to {best_model_name}")
+            break
