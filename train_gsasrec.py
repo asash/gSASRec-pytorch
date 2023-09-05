@@ -23,7 +23,7 @@ model = build_model(config, device)
 
 train_dataloader = get_train_dataloader(config.dataset_name, batch_size=config.train_batch_size,
                                          max_length=config.sequence_length, train_neg_per_positive=config.negs_per_pos)
-val_dataloader = get_val_dataloader(config.dataset_name, batch_size=config.train_batch_size, max_length=config.sequence_length)
+val_dataloader = get_val_dataloader(config.dataset_name, batch_size=config.eval_batch_size, max_length=config.sequence_length)
 
 loss_fct = gBCE(pool_size=num_items-1, negatives=config.negs_per_pos, t=config.gbce_t)
 optimiser = torch.optim.Adam(model.parameters())

@@ -14,8 +14,9 @@ def build_model(config, device):
     num_items = get_num_items(config.dataset_name) 
     model = GSASRec(num_items, sequence_length=config.sequence_length, embedding_dim=config.embedding_dim,
                         num_heads=config.num_heads, num_blocks=config.num_blocks, dropout_rate=config.dropout_rate).to(device)
+    return model
 
-def get_device(self):
+def get_device():
     device = "cpu"
     if torch.cuda.is_available():
         device="cuda:0"

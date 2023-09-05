@@ -10,7 +10,8 @@ def evaluate(model: GSASRec, data_loader, metrics, limit, filter_rated, device):
     scored_docs = []
     qrels = [] 
     with torch.no_grad():
-        for batch_idx, (data, rated, target) in tqdm.tqdm(enumerate(data_loader)):
+        max_batches = len(data_loader)
+        for batch_idx, (data, rated, target) in tqdm.tqdm(enumerate(data_loader), total=max_batches):
             data, target = data.to(device), target.to(device)
             if filter_rated:
                 items, scores = model.get_predictions(data, limit, rated)

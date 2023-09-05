@@ -12,6 +12,7 @@ class GSASRecExperimentConfig(object):
                              early_stopping_patience=200,
                              gbce_t = 0.75,
                              filter_rated=True,
+                             eval_batch_size=512,
                              recommendation_limit=100
                              ):
         self.sequence_length = sequence_length
@@ -30,4 +31,5 @@ class GSASRecExperimentConfig(object):
         self.gbce_t = gbce_t
         self.filter_rated = filter_rated
         self.recommendation_limit = recommendation_limit
+        self.eval_batch_size = eval_batch_size
         
