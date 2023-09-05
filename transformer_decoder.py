@@ -61,7 +61,9 @@ class MultiHeadAttention(nn.Module):
 
         outputs *= query_masks
 
-        attention_weights = outputs
+        attention_chunks = outputs.chunk(self.num_heads, dim=0)
+        attention_weights = torch.stack(attention_chunks, dim=1)
+
 
         # Dropouts
         outputs = self.dropout(outputs)
