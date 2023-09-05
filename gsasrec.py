@@ -23,7 +23,7 @@ class GSASRec(torch.nn.Module):
 
     #returns last hidden state and the attention weights
     def forward(self, input):
-        seq = self.item_embedding(input)
+        seq = self.item_embedding(input.long())
         mask = (input != self.num_items + 1).float().unsqueeze(-1)
         
         bs = seq.size(0)
@@ -45,12 +45,12 @@ class GSASRec(torch.nn.Module):
         with torch.no_grad():
             model_out, _ = self.forward(input)
             seq_emb = model_out[:,-1,:] 
-            self.item_embedding.weight[:-1].transpose(0, 1)
-            preds = torch.matmul(seq_emb, self.item_embedding.weight[:-1].transpose(0, 1))
+            scores = torch.einsum('bd,nd->bn', seq_emb, self.item_embedding.weight)
+            scores[:,0] = float("-inf")
+            scores[self.num_items+1:] = float("-inf")
             if rated is not None:
                 for i in range(len(input)):
                     for j in rated[i]:
-                        preds[i, j] = float("-inf")
-            preds[:,0] = float("-inf")
-            result = torch.topk(preds, limit, dim=1)
+                        scores[i, j] = float("-inf")
+            result = torch.topk(scores, limit, dim=1)
             return result.indices, result.values

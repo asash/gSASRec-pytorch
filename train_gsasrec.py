@@ -7,6 +7,7 @@ from dataset_utils import get_train_dataloader, get_num_items, get_val_dataloade
 from tqdm import tqdm
 from gbce import gBCE
 from eval_utils import evaluate
+from torchsummary import summary
 
 models_dir = "models"
 if not os.path.exists(models_dir):
@@ -19,7 +20,7 @@ config = load_config(args.config)
 
 num_items = get_num_items(config.dataset_name) 
 device = get_device()
-model = build_model(config, device)
+model = build_model(config)
 
 train_dataloader = get_train_dataloader(config.dataset_name, batch_size=config.train_batch_size,
                                          max_length=config.sequence_length, train_neg_per_positive=config.negs_per_pos)
@@ -33,6 +34,9 @@ best_metric = float("-inf")
 best_model_name = None
 step = 0
 steps_not_improved = 0
+
+print(summary(model, (config.sequence_length,)))
+model = model.to(device)
 
 for epoch in range(config.max_epochs):
     model.train()   
@@ -48,7 +52,7 @@ for epoch in range(config.max_epochs):
         negatives = negatives[:, 1:, :]
         pos_neg_concat = torch.cat([labels.unsqueeze(-1), negatives], dim=-1)
         pos_neg_embeddings = model.item_embedding(pos_neg_concat)
-        mask = (labels != num_items + 1).float().unsqueeze(-1).repeat(1, 1, 1, config.negs_per_pos + 1)
+        mask = (model_input != num_items + 1).float().unsqueeze(-1).repeat(1, 1, config.negs_per_pos + 1)
         scores = torch.einsum('bld,blnd->bln', last_hidden_state, pos_neg_embeddings)
         gt = torch.zeros_like(scores)
         gt[:, :, 0] = 1

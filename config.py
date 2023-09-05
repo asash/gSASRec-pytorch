@@ -6,14 +6,14 @@ class GSASRecExperimentConfig(object):
                              dropout_rate=0.0,
                              negs_per_pos=256,
                              max_epochs=10000,
-                             max_batches_per_epoch=1,
+                             max_batches_per_epoch=100,
                              metrics=[nDCG@10, R@1, R@10],
                              val_metric = nDCG@10,
                              early_stopping_patience=200,
                              gbce_t = 0.75,
                              filter_rated=True,
                              eval_batch_size=512,
-                             recommendation_limit=100
+                             recommendation_limit=10
                              ):
         self.sequence_length = sequence_length
         self.embedding_dim = embedding_dim

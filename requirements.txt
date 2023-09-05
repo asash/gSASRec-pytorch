@@ -4,3 +4,4 @@ numpy
 datasets
 ir_measures
 tqdm
+torchsummary
