@@ -15,11 +15,27 @@ If you use this code from the repository, please cite the work:
 ```
 
 
-This model has been validated against the original gSASRec tensorflow implementation.
+This model has been validated against the [original]([url](https://github.com/asash/gsasrec)) gSASRec tensorflow implementation.
 This repository also contains a pre-split MovieLens-1M dataset and a pre-trained checkpoint of gSASRec for reproducibility. 
 
 
-## GSASrec and GBCE info info
+## Usage: 
+
+**training**
+```
+python3 train_gsasrec.py --config=config_ml1m.py
+```
+
+During training, the model will print validation metrics. These metrics should not be used for reporting results. Instead, after training, run the  evaluation script: 
+
+**evaluation**
+```
+python3 evaluate_gsasrec.py --config=config_ml1m.py pre_trained/gsasrec-ml1m-step:69216-t:0.75-negs:256-emb:128-dropout:0.5-metric:0.19149011481716563.pt
+```
+You can use a pre-trained checkpoint or use your checkpoint created by the training script. 
+
+
+## gSASrec and gBCE info info
 **gSASRec** is a SASRec-based sequential recommendation model that utilises more negatives per positive and gBCE loss: 
 
 ```math
@@ -42,7 +58,7 @@ Where $`\alpha`$ is the negative sampling rate: $`\frac{`|I_k^-|`}{|I| - 1}`$, a
 Two models' hyperparameters (in addition to standard SASRec's hyperparameters) are $`k`$ -- the number of negatives per positive, and $`t`$. We recommend using $`k = 256`$ and $`t=0.75`$.  
 However, if you want fully calibrated probabilities (e.g., not just to sort items but use these probabilities as an approximation for CTR), you should set $t=1.0$. In this case, model training will take longer but converge to realistic probabilities (see proofs and experiments in the paper). 
 
- We do not implement gBCE explicitly. Instead, we use score positive conversion and then use the [standard BCE](losses/bce.py) loss: 
+ We do not implement gBCE explicitly. Instead, we use score positive conversion and then use the [standard BCE](https://pytorch.org/docs/stable/generated/torch.nn.functional.binary_cross_entropy_with_logits.html) loss: 
 ```math
 \begin{align}
         \mathcal{L}^{\beta}_{gBCE}(s^+, s^-) =  \mathcal{L}_{BCE}(\gamma(s^+), s^-)
@@ -56,23 +72,96 @@ where
 \end{align}
 ```
 
-Our SASRec code is based on the original SASRec code. 
+Corresponding logits transformation code (from model training): 
+```python
+        alpha = config.negs_per_pos / (num_items - 1)
+        t = config.gbce_t 
+        beta = alpha * ((1 - 1/alpha)*t + 1/alpha)
+        positive_logits = logits[:, :, 0:1].to(torch.float64) #use float64 to increase numerical stability
+        negative_logits = logits[:,:,1:].to(torch.float64)
+        eps = 1e-10
+        positive_probs = torch.clamp(torch.sigmoid(positive_logits), eps, 1-eps)
+        positive_probs_adjusted = torch.clamp(positive_probs.pow(-beta), 1+eps, torch.finfo(torch.float64).max)
+        to_log = torch.clamp(torch.div(1.0, (positive_probs_adjusted  - 1)), eps, torch.finfo(torch.float64).max)
+        positive_logits_transformed = to_log.log()
+        logits = torch.cat([positive_logits_transformed, negative_logits], -1)
 
-## Usage: 
-
-**training**
 ```
-python3 train_gsasrec.py --config=config_ml1m.py
-```
 
-During training, the model will print validation metrics. These metrics should not be used for reporting results. Instead, after training, run the  evaluation script: 
+Our gSASRec code is based on the [original SASRec code](https://github.com/kang205/SASRec). The architecture of the model itself is based on a Transformer decoder and is identical to the SASRec architecture. The difference is in training rather than in the model architecture. 
 
-**evaluation**
-```
-python3 evaluate_gsasrec.py --config=config_ml1m.py pre_trained/gsasrec-ml1m-step:69216-t:0.75-negs:256-emb:128-dropout:0.5-metric:0.19149011481716563.pt
-```
-You can use a pre-trained checkpoint or use your checkpoint created by the training script. 
+# Config files
+We use a Python file as a config file. list of supported parameters: 
 
+**dataset_name**: dataset (from datasets folder).
+
+**sequence_length**: maximum length of the input sequence.
+
+**embedding_dim**: dimensionality of embedding.
+
+**train_batch_size**: gSASRecs batch size used during training.
+
+**num_heads**: number of attention heads used by gSASRec. Note that in SASRec, weights are shared between heads. 
+
+**num_blocks**: number of transformer decoder blocks.
+
+**dropout_rate**: percentage of switched-off neurons. This is important to prevent overfitting on smaller datasets.
+
+**max_epochs**: maximum number of epochs (usually, it will stop earlier).
+
+**negs_per_pos**: gSASRec specific -- number of negatives per positive.
+
+**max_batches_per_epoch**: The epoch number will be limited by this number of batches.
+
+**metrics**: list of metrics used for training or evaluation. 
+
+**val_metric**: This metric will be used for early stopping.
+
+**early_stopping_patience**: Training will stop after this number of epochs without val_metric improving.
+
+**gbce_t**: gSASRec specific, calibration parameter t for the gBCE loss.
+
+**filter_rated**: whether or not filter already rated items
+
+**eval_batch_size**: batch size used during validation
+
+**recommendation_limit**: number of items returned by the `get_predictions` function
+
+**reuse_item_embeddings**: whether or not we re-use original item embeddings for computing output scores. The option to use a separate embeddings table in the output layer is described in the original SASRec paper, but needs to be added to the original code. We added it in this version and used a separate  embedding table by default for gSASRec. 
+
+Default parameter values are specified in the [config.py](config.py) file
+
+Example training configuration for MovieLens-1M: 
+```python
+from config import GSASRecExperimentConfig
+
+config = GSASRecExperimentConfig(
+    dataset_name='ml1m',
+    sequence_length=200,
+    embedding_dim=128,
+    num_heads=1,
+    max_batches_per_epoch=100,
+    num_blocks=2,
+    dropout_rate=0.5,
+    negs_per_pos=256,
+    gbce_t = 0.75,
+)
+```
+## Metrics
+We use [ir-measures](https://ir-measur.es/en/latest/) for measuring model quality. By default, we monitor nDCG@10, Recall@10 (R@10) and Recall@1 (R@1); however, the library contains many more ranking metrics. 
+
+## Datasets
+Currently, this dataset only contains a pre-processed version of the MovieLens-1M dataset from the original SASRec repository. The same dataset version was used in the original SASRec paper, BERT4Rec paper, and many other follow-up papers. In this version, all items with less than 5 interactions are removed. 
+
+For reproducibility, we pre-split the dataset into three parts: 
+
+Test: last interaction for each user. 
+Validation: second last interactions for 512 randomly selected users. 
+Train: all other interactions. 
+
+If you want to map to the original MovieLens-1M dataset (e.g.  for finding item titles or genres), use the reverse-engineered mapping from this repository: https://github.com/asash/ml1m-sas-mapping. 
+
+Following the original dataset, we assume that items are numbered from 1 to num_items, and all sequences are stored as sequences in corresponding folders. 
 
 ## SASRec mode
 
