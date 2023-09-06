@@ -5,7 +5,6 @@ import torch
 from utils import load_config, build_model, get_device
 from dataset_utils import get_train_dataloader, get_num_items, get_val_dataloader
 from tqdm import tqdm
-from gbce import gBCE
 from eval_utils import evaluate
 from torchsummary import summary
 
@@ -26,7 +25,6 @@ train_dataloader = get_train_dataloader(config.dataset_name, batch_size=config.t
                                          max_length=config.sequence_length, train_neg_per_positive=config.negs_per_pos)
 val_dataloader = get_val_dataloader(config.dataset_name, batch_size=config.eval_batch_size, max_length=config.sequence_length)
 
-loss_fct = gBCE(pool_size=num_items-1, negatives=config.negs_per_pos, t=config.gbce_t)
 optimiser = torch.optim.Adam(model.parameters())
 batches_per_epoch = min(config.max_batches_per_epoch, len(train_dataloader))
 
@@ -52,16 +50,29 @@ for epoch in range(config.max_epochs):
         pos_neg_concat = torch.cat([labels.unsqueeze(-1), negatives], dim=-1)
         pos_neg_embeddings = model.item_embedding(pos_neg_concat)
         mask = (model_input != num_items + 1).float()
-        scores = torch.einsum('bld,blnd->bln', last_hidden_state, pos_neg_embeddings)
-        gt = torch.zeros_like(scores)
+        logits = torch.einsum('bse, bsne -> bsn', last_hidden_state, pos_neg_embeddings)
+        gt = torch.zeros_like(logits)
         gt[:, :, 0] = 1
-        loss = loss_fct(scores, gt).sum(dim=-1)
-        mean_loss = loss.sum() / (mask.sum() * (config.negs_per_pos + 1))
-        mean_loss.backward()
+
+        alpha = config.negs_per_pos / (num_items - 1)
+        t = config.gbce_t 
+        beta = alpha * ((1 - 1/alpha)*t + 1/alpha)
+        
+        positive_logits = logits[:, :, 0:1].to(torch.float64) #use float64 to increase numerical stability
+        negative_logits = logits[:,:,1:].to(torch.float64)
+        eps = 1e-10
+        positive_probs = torch.clamp(torch.sigmoid(positive_logits), eps, 1-eps)
+        positive_probs_adjusted = torch.clamp(torch.math.pow(positive_probs, -beta), 1+eps, torch.finfo(torch.float64).max)
+        to_log = torch.clamp(torch.div(1.0, (positive_probs_adjusted  - 1)), eps, torch.finfo(torch.float64).max)
+        positive_logits_transformed = torch.math.log(to_log)
+        logits = torch.cat([positive_logits_transformed, negative_logits], -1)
+        loss_per_element = torch.nn.functional.binary_cross_entropy_with_logits(logits, gt, reduction='none').mean(-1)* mask.unsqueeze(-1)
+        loss = loss_per_element.sum() / mask.sum()
         optimiser.step()
         optimiser.zero_grad()
-        loss_sum += mean_loss.item()
+        loss_sum += loss.item()
         pbar.set_description(f"Epoch {epoch} loss: {loss_sum / (batch_idx + 1)}")
+
     evaluation_result = evaluate(model, val_dataloader, config.metrics, config.recommendation_limit, 
                                  config.filter_rated, device=device) 
     print(f"Epoch {epoch} evaluation result: {evaluation_result}")
