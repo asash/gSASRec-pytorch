@@ -56,7 +56,7 @@ for epoch in range(config.max_epochs):
         gt = torch.zeros_like(scores)
         gt[:, :, 0] = 1
         loss = loss_fct(scores, gt).sum(dim=-1)
-        mean_loss = loss.sum() / mask.sum()
+        mean_loss = loss.sum() / (mask.sum() * (config.negs_per_pos + 1))
         mean_loss.backward()
         optimiser.step()
         optimiser.zero_grad()
