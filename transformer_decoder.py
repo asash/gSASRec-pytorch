@@ -7,7 +7,7 @@ import torch.nn.functional as F
 #We try to keep the same structure as the original SASRec's decoder
 #In general, there is no necessity to use this version, and we can just use standard pytorch's transformer decoder
 #But we want to keep the same structure as the original SASRec and gSASRec papers 
-#SASRec uses somewhat weird version of multihead attention, where all the heads are concatenated and the heads share the same parameters
+#SASRec uses somewhat weird version of multihead attention, where all the heads share the linear layers
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, dim, num_heads, dropout_rate=0.5):
