@@ -48,7 +48,8 @@ for epoch in range(config.max_epochs):
         labels = positives[:, 1:]
         negatives = negatives[:, 1:, :]
         pos_neg_concat = torch.cat([labels.unsqueeze(-1), negatives], dim=-1)
-        pos_neg_embeddings = model.item_embedding(pos_neg_concat)
+        output_embeddings = model.get_output_embeddings()
+        pos_neg_embeddings = output_embeddings(pos_neg_concat)
         mask = (model_input != num_items + 1).float()
         logits = torch.einsum('bse, bsne -> bsn', last_hidden_state, pos_neg_embeddings)
         gt = torch.zeros_like(logits)

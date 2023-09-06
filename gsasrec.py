@@ -2,7 +2,7 @@ import torch
 from transformer_decoder import TransformerBlock
 
 class GSASRec(torch.nn.Module):
-    def __init__ (self, num_items, sequence_length=200, embedding_dim=256, num_heads=4, num_blocks=3, dropout_rate=0.5):
+    def __init__ (self, num_items, sequence_length=200, embedding_dim=256, num_heads=4, num_blocks=3, dropout_rate=0.5, reuse_item_embeddings=False):
         super(GSASRec, self).__init__()
         self.num_items = num_items
         self.sequence_length = sequence_length
@@ -19,7 +19,15 @@ class GSASRec(torch.nn.Module):
             for _ in range(num_blocks)
         ])
         self.seq_norm = torch.nn.LayerNorm(self.embedding_dim)
+        self.reuse_item_embeddings = reuse_item_embeddings
+        if not self.reuse_item_embeddings:
+            self.output_embedding = torch.nn.Embedding(self.num_items + 2, self.embedding_dim)
 
+    def get_output_embeddings(self) -> torch.nn.Embedding:
+        if self.reuse_item_embeddings:
+            return self.item_embedding
+        else:
+            return self.output_embedding
 
     #returns last hidden state and the attention weights
     def forward(self, input):
@@ -45,7 +53,8 @@ class GSASRec(torch.nn.Module):
         with torch.no_grad():
             model_out, _ = self.forward(input)
             seq_emb = model_out[:,-1,:] 
-            scores = torch.einsum('bd,nd->bn', seq_emb, self.item_embedding.weight)
+            output_embeddings = self.get_output_embeddings()
+            scores = torch.einsum('bd,nd->bn', seq_emb, output_embeddings.weight)
             scores[:,0] = float("-inf")
             scores[:,self.num_items+1:] = float("-inf")
             if rated is not None:

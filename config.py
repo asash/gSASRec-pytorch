@@ -13,7 +13,8 @@ class GSASRecExperimentConfig(object):
                              gbce_t = 0.75,
                              filter_rated=True,
                              eval_batch_size=512,
-                             recommendation_limit=10
+                             recommendation_limit=10,
+                             reuse_item_embeddings=False
                              ):
         self.sequence_length = sequence_length
         self.embedding_dim = embedding_dim
@@ -32,4 +33,5 @@ class GSASRecExperimentConfig(object):
         self.filter_rated = filter_rated
         self.recommendation_limit = recommendation_limit
         self.eval_batch_size = eval_batch_size
+        self.reuse_item_embeddings = reuse_item_embeddings 
         
