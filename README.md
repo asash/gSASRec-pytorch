@@ -167,7 +167,7 @@ Following the original dataset, we assume that items are numbered from 1 to num_
 
 gSASRec is a generalisation over normal SASRec. This code also adapts the original code to pytorch with gSASRec-specific modifications. 
 
-To train a pure SASRec model, set parameters `negs_per_pos=1` (one negative per positive) and `gbce_t=0.0` (use gBCE in the original form). The original SASRec  paper suggests that item embeddings can or can not be reused between the first and last layers of the model; however, the original code only has the version with reusable embeddings. In our experiments with gSASRec, we found that a separate set of item embeddings improves model convergence.  Nevertheless, if you want to use this code in vanilla SASRec mode, you can disable separate embeddings. This can be achieved by setting `reuse_item_embeddings=True`. 
+To train a pure SASRec model, set parameters `negs_per_pos=1` (one negative per positive) and `gbce_t=0.0` (this turns gBCE into BCE). The original SASRec  paper suggests that item embeddings can or can not be reused between the first and last layers of the model; however, the original code only has the version with reusable embeddings. In our experiments with gSASRec, we found that a separate set of item embeddings improves model convergence.  Nevertheless, if you want to use this code in vanilla SASRec mode, you can disable separate embeddings. This can be achieved by setting `reuse_item_embeddings=True`. 
 
 Overall, to train a vanilla SASRec model, your config may look like this: 
 ```python
