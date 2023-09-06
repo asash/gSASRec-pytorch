@@ -15,7 +15,7 @@ If you use this code from the repository, please cite the work:
 ```
 
 
-This model has been validated against the [original]([url](https://github.com/asash/gsasrec)) gSASRec tensorflow implementation.
+This model has been validated against the [original](https://github.com/asash/gsasrec) gSASRec tensorflow implementation.
 This repository also contains a pre-split MovieLens-1M dataset and a pre-trained checkpoint of gSASRec for reproducibility. 
 
 
