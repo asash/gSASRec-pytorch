@@ -62,12 +62,13 @@ for epoch in range(config.max_epochs):
         negative_logits = logits[:,:,1:].to(torch.float64)
         eps = 1e-10
         positive_probs = torch.clamp(torch.sigmoid(positive_logits), eps, 1-eps)
-        positive_probs_adjusted = torch.clamp(torch.math.pow(positive_probs, -beta), 1+eps, torch.finfo(torch.float64).max)
+        positive_probs_adjusted = torch.clamp(positive_probs.pow(-beta), 1+eps, torch.finfo(torch.float64).max)
         to_log = torch.clamp(torch.div(1.0, (positive_probs_adjusted  - 1)), eps, torch.finfo(torch.float64).max)
-        positive_logits_transformed = torch.math.log(to_log)
+        positive_logits_transformed = to_log.log()
         logits = torch.cat([positive_logits_transformed, negative_logits], -1)
-        loss_per_element = torch.nn.functional.binary_cross_entropy_with_logits(logits, gt, reduction='none').mean(-1)* mask.unsqueeze(-1)
+        loss_per_element = torch.nn.functional.binary_cross_entropy_with_logits(logits, gt, reduction='none').mean(-1)*mask
         loss = loss_per_element.sum() / mask.sum()
+        loss.backward()
         optimiser.step()
         optimiser.zero_grad()
         loss_sum += loss.item()
