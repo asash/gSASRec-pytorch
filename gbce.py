@@ -7,6 +7,8 @@ class gBCE(torch.nn.Module):
         print(f"gbce beta: {self.beta}")
 
     def forward(self, logits, targets):
+        logits = logits.to(torch.float64) #increase precision, as gBCE works with small numbers
+        targets = targets.to(torch.float64)
         pos = targets*torch.nn.functional.softplus(-logits) 
         neg = (1.0 - targets)*torch.nn.functional.softplus(logits)
         loss = (self.beta*pos + neg)
