@@ -56,7 +56,7 @@ Where $`\alpha`$ is the negative sampling rate: $`\frac{`|I_k^-|`}{|I| - 1}`$, a
 
 
 Two models' hyperparameters (in addition to standard SASRec's hyperparameters) are $`k`$ -- the number of negatives per positive, and $`t`$. We recommend using $`k = 256`$ and $`t=0.75`$.  
-However, if you want fully calibrated probabilities (e.g., not just to sort items but use these probabilities as an approximation for CTR), you should set $t=1.0$. In this case, model training will take longer but converge to realistic probabilities (see proofs and experiments in the paper). 
+However, if you want fully calibrated probabilities (e.g., not just to sort items but to use these probabilities as an approximation for CTR), you should set $t=1.0$. In this case, model training will take longer but converge to realistic probabilities (see proofs and experiments in the paper). 
 
  We do not implement gBCE explicitly. Instead, we use score positive conversion and then use the [standard BCE](https://pytorch.org/docs/stable/generated/torch.nn.functional.binary_cross_entropy_with_logits.html) loss: 
 ```math
