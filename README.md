@@ -45,7 +45,7 @@ to evaluate these models, run the following commands:
 ```
 **pre-trained gSASRec model**
 ```python3
-  python3 evaluate_gsasrec.py --config=config_ml1m.py  --checkpoint pre_trained/gsasrec-ml1m-step:86064-t:0.75-negs:256-emb:128-dropout:0.5-metric:0.1974453226738962.p
+  python3 evaluate_gsasrec.py --config=config_ml1m.py  --checkpoint pre_trained/gsasrec-ml1m-step:86064-t:0.75-negs:256-emb:128-dropout:0.5-metric:0.1974453226738962.pt
 ```
 
 Evaluation results for the pre-trained models: 
