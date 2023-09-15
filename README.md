@@ -39,11 +39,11 @@ We provide checkpoints for the models for the MovieLens-1M dataset trained with 
 
 to evaluate these models, run the following commands: 
 
-** pre-trained SASRec model **
+**pre-trained SASRec model**
 ```python3
     python3 evaluate_gsasrec.py --config=config_ml1m_sasrec.py  --checkpoint=pre_trained/gsasrec-ml1m-step:47520-t:0.0-negs:1-emb:128-dropout:0.5-metric:0.1428058429831465.pt
 ```
-** pre-trained gSASRec model **
+**pre-trained gSASRec model**
 ```python3
   python3 evaluate_gsasrec.py --config=config_ml1m.py  --checkpoint pre_trained/gsasrec-ml1m-step:86064-t:0.75-negs:256-emb:128-dropout:0.5-metric:0.1974453226738962.p
 ```
