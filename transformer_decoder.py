@@ -104,6 +104,7 @@ class TransformerBlock(nn.Module):
         # Feed Forward
         residual = x
         x = self.dense1(x)
+        x = F.relu(x)
         x = self.dropout(x)
         x = self.dense2(x)
         x = self.dropout(x)
