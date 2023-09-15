@@ -34,6 +34,30 @@ python3 evaluate_gsasrec.py --config=config_ml1m.py pre_trained/gsasrec-ml1m-ste
 ```
 You can use a pre-trained checkpoint or use your checkpoint created by the training script. 
 
+## Pre-Trained models
+We provide checkpoints for the models for the MovieLens-1M dataset trained with gSASRec (using this config: [config_ml1m.py](config_ml1m.py)) and regular SASRec ((using this config: [config_ml1m_sasrec.py](config_ml1m_sasrec.py)))
+
+to evaluate these models, run the following commands: 
+
+** pre-trained SASRec model **
+```python3
+    python3 evaluate_gsasrec.py --config=config_ml1m_sasrec.py  --checkpoint=pre_trained/gsasrec-ml1m-step:47520-t:0.0-negs:1-emb:128-dropout:0.5-metric:0.1428058429831465.pt
+```
+** pre-trained gSASRec model **
+```python3
+  python3 evaluate_gsasrec.py --config=config_ml1m.py  --checkpoint pre_trained/gsasrec-ml1m-step:86064-t:0.75-negs:256-emb:128-dropout:0.5-metric:0.1974453226738962.p
+```
+
+Evaluation results for the pre-trained models: 
+
+| Model   | Loss | Number of Negatives   per Positive | t    | Recall@1 | Recall@10 | NDCG@10 |
+| ------- | ---- | ---------------------------------- | ---- | -------- | --------- | ------- |
+| SASrec  | BCE  | 1                                  | 0.0  | 0.0442   |    0.2392       |  0.1259       |
+| gSASRec | gBCE | 128                                | 0.75 |      0.0754     |    0.3003       |   0.1726      |
+
+
+
+
 
 ## gSASrec and gBCE info info
 **gSASRec** is a SASRec-based sequential recommendation model that utilises more negatives per positive and gBCE loss: 
