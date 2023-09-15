@@ -6,7 +6,7 @@ from utils import load_config, build_model, get_device
 from dataset_utils import get_train_dataloader, get_num_items, get_val_dataloader
 from tqdm import tqdm
 from eval_utils import evaluate
-from torchsummary import summary
+from torchinfo import summary
 
 models_dir = "models"
 if not os.path.exists(models_dir):
@@ -34,6 +34,7 @@ step = 0
 steps_not_improved = 0
 
 model = model.to(device)
+summary(model, (config.train_batch_size, config.sequence_length), batch_dim=None)
 
 for epoch in range(config.max_epochs):
     model.train()   
