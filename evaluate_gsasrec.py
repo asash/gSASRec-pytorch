@@ -14,7 +14,7 @@ num_items = get_num_items(config.dataset_name)
 device = get_device()
 model = build_model(config)
 model = model.to(device)
-model.load_state_dict(torch.load(args.checkpoint))
+model.load_state_dict(torch.load(args.checkpoint, map_location=device))
 
 test_dataloader = get_test_dataloader(config.dataset_name, batch_size=config.eval_batch_size, max_length=config.sequence_length)
 evaluation_result = evaluate(model, test_dataloader, config.metrics, config.recommendation_limit, 
