@@ -8,9 +8,10 @@ If you use this code from the repository, please cite the work:
 ```
 @inproceedings{petrov2023gsasrec,
   title={gSASRec: Reducing Overconfidence in Sequential Recommendation Trained with Negative Sampling},
-  author={Petrov, Aleksandr and Macdonald, Craig},
-  booktitle={Seventeen ACM Conference on Recommender Systems},
-  year={2022}
+  author={Petrov, Aleksandr Vladimirovich and Macdonald, Craig},
+  booktitle={Proceedings of the 17th ACM Conference on Recommender Systems},
+  pages={116--128},
+  year={2023}
 }
 ```
 
